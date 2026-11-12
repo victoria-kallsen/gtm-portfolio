@@ -1,26 +1,97 @@
 ---
 import Base from '../layouts/Base.astro';
 import { getCollection } from 'astro:content';
+import { plays } from '../data/plays';
 
 const studies = (await getCollection('caseStudies')).sort((a, b) => a.data.order - b.data.order);
 // TODO: replace with real booking link (Cal.com / Calendly)
 const bookingUrl = '#contact';
+
+const feed = [
+  { co: 'Northwind Analytics', sig: 'Posted "Head of Revenue Operations"', score: 86, act: 'Sequence started' },
+  { co: 'Brightline Health', sig: 'Raised a $24M Series B', score: 78, act: 'Added to AE queue' },
+  { co: 'Kestrel Logistics', sig: 'Visited the pricing page 3 times this week', score: 91, act: 'Rep alerted in Slack' },
+  { co: 'Fernway', sig: 'Past champion joined as VP Sales', score: 88, act: 'Congrats email drafted' },
+];
 ---
 <Base>
-  <section>
-    <div class="wrap">
-      <p class="eyebrow">GTM Engineer · Contract</p>
-      <h1>I build the systems that find your next customers and stop you paying for tools you don't need.</h1>
-      <p class="lede">Signal-based outbound, enrichment and routing, and lean GTM stacks for B2B teams that want more pipeline without more headcount.</p>
-      <div class="actions">
-        <a class="btn" href={bookingUrl}>Book a call</a>
-        <a class="btn ghost" href="#work">See the work</a>
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <p class="eyebrow">GTM Engineer · Contract</p>
+        <h1>Outbound that starts with a reason to reach out.</h1>
+        <p class="lede">I build systems that notice when an account is ready to buy, like a new hire, a funding round or a pricing-page visit, and get the right message to the right person that day. I also cut the tools you're paying for twice.</p>
+        <div class="actions">
+          <a class="btn" href={bookingUrl}>Book a call</a>
+          <a class="btn ghost" href="#example">See how it works</a>
+        </div>
       </div>
+      <div class="feed card" aria-label="Example signal feed">
+        <div class="feed-head"><span class="dot"></span> Signal feed <span class="feed-tag">example</span></div>
+        {feed.map((f) => (
+          <div class="feed-row">
+            <div><strong>{f.co}</strong><span>{f.sig}</span></div>
+            <div class="feed-right"><b class="score">{f.score}</b><em>{f.act}</em></div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section id="example" class="band">
+    <div class="wrap">
+      <p class="eyebrow">Worked example</p>
+      <h2>From one job post to a booked meeting</h2>
+      <p class="lede" style="margin-bottom:32px">Here's what happens, step by step, when a target account posts a role that suggests it's about to buy.</p>
+      <ol class="steps">
+        <li class="card">
+          <span class="num">1 · Signal</span>
+          <div class="artifact">
+            <div class="jp-co">Northwind Analytics · 180 employees · Series B</div>
+            <div class="jp-title">Head of Revenue Operations</div>
+            <div class="jp-line">"…own our GTM tech stack and build scalable outbound processes…"</div>
+            <div class="jp-meta">Posted 2 days ago</div>
+          </div>
+          <p>A new RevOps leader usually means new budget and a fresh look at the tool stack within 90 days.</p>
+        </li>
+        <li class="card">
+          <span class="num">2 · Score</span>
+          <table class="artifact score-table">
+            <tr><td>B2B SaaS, 100–500 people</td><td>+30</td></tr>
+            <tr><td>Hiring for RevOps</td><td>+25</td></tr>
+            <tr><td>Uses HubSpot (we integrate)</td><td>+20</td></tr>
+            <tr><td>Raised in the last 12 months</td><td>+11</td></tr>
+            <tr class="total"><td>Score</td><td>86 / 100</td></tr>
+          </table>
+          <p>Anything over 75 goes straight to outreach. Everything else waits for a second signal.</p>
+        </li>
+        <li class="card">
+          <span class="num">3 · Find the people</span>
+          <div class="artifact contact">
+            <div><strong>Dana Ruiz</strong> · VP Sales <span class="hint">likely hiring manager</span></div>
+            <div class="row"><span>Email</span><span>verified <i>(2nd provider)</i></span></div>
+            <div class="row"><span>LinkedIn</span><span>active, posted last week</span></div>
+            <div class="row"><span>Also</span><span>CRO, 2 sales managers</span></div>
+          </div>
+          <p>Contacts are enriched through a waterfall of providers, and every email is verified before sending.</p>
+        </li>
+        <li class="card">
+          <span class="num">4 · Message</span>
+          <div class="artifact email">
+            <div class="subj">Subject: your RevOps hire</div>
+            <p>Hi Dana, saw you're bringing on a Head of RevOps. Usually that means the stack and outbound process are next on the list.</p>
+            <p>We help teams like yours get outbound running before the new hire's 90-day plan is due. Worth a quick look?</p>
+          </div>
+          <p>The message references the actual reason, so it reads like a person noticed, not like a blast.</p>
+        </li>
+      </ol>
+      <p class="fine">Company and person names are made up for illustration.</p>
     </div>
   </section>
 
   <section id="work">
     <div class="wrap">
+      <p class="eyebrow">Case studies</p>
       <h2>Selected work</h2>
       <div class="grid">
         {studies.map((s) => (
@@ -39,14 +110,42 @@ const bookingUrl = '#contact';
     </div>
   </section>
 
-  <section id="services">
+  <section id="services" class="band">
     <div class="wrap">
-      <h2>What I can build for you</h2>
-      <div class="services">
-        <div><h3>Signal-based outbound</h3><p>Watch hiring, funding, tech and intent signals, score accounts, and send timely, relevant outreach automatically.</p></div>
-        <div><h3>Enrichment and routing</h3><p>Waterfall enrichment, lead scoring, and routing so every inbound lead reaches the right rep in minutes.</p></div>
-        <div><h3>GTM stack audits</h3><p>Find overlapping tools and unused seats, consolidate, and migrate with no downtime.</p></div>
-        <div><h3>CRM and data hygiene</h3><p>Clean, deduplicated, trustworthy CRM data your reps and reports can rely on.</p></div>
+      <p class="eyebrow">Plays I build</p>
+      <h2>Specific systems, not "outbound strategy"</h2>
+      <div class="plays">
+        {plays.map((p) => (
+          <div class="card play">
+            <h3>{p.name}</h3>
+            <p><strong>When:</strong> {p.trigger}</p>
+            <ol class="flow">{p.steps.map((s) => <li>{s}</li>)}</ol>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section id="tools">
+    <div class="wrap">
+      <p class="eyebrow">Free tools</p>
+      <h2>Try something I built</h2>
+      <div class="grid">
+        <a class="card" href="/stack-audit/">
+          <span class="tag">Interactive</span>
+          <h3>GTM stack audit</h3>
+          <p>Tick the tools you pay for and see where they overlap, how much goes on unused seats, and what you could cut.</p>
+        </a>
+        <a class="card" href="/signals/">
+          <span class="tag">Guide</span>
+          <h3>GTM signal map</h3>
+          <p>Which tools actually provide which buying signals: hiring, funding, intent, web visits, job changes and more.</p>
+        </a>
+        <div class="card soon">
+          <span class="tag">Coming soon</span>
+          <h3>Account brief generator</h3>
+          <p>Enter a company domain and get back the signals worth acting on and a draft opener.</p>
+        </div>
       </div>
     </div>
   </section>
@@ -55,7 +154,7 @@ const bookingUrl = '#contact';
     <div class="wrap">
       <div class="cta">
         <h2>Want to see if I can help?</h2>
-        <p class="lede">Tell me about your GTM motion. I'll come back with where I'd start and what it would likely save or generate.</p>
+        <p class="lede">Tell me who you sell to. I'll come back with the 2 or 3 signals I'd build on first and what it would take.</p>
         <div class="actions">
           <a class="btn" href={bookingUrl}>Book a 20-minute call</a>
         </div>
@@ -63,3 +162,52 @@ const bookingUrl = '#contact';
     </div>
   </section>
 </Base>
+
+<style>
+  .hero-grid { display: grid; grid-template-columns: 1.15fr 1fr; gap: 48px; align-items: center; }
+  .feed { padding: 0; gap: 0; overflow: hidden; }
+  .feed-head { display: flex; align-items: center; gap: 8px; padding: 14px 18px; font-size: 13px; font-weight: 600; border-bottom: 1px solid var(--border); }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: #3fb07f; box-shadow: 0 0 0 4px rgba(63,176,127,.18); }
+  .feed-tag { margin-left: auto; font-weight: 500; color: var(--muted); font-size: 12px; }
+  .feed-row { display: flex; justify-content: space-between; gap: 14px; padding: 14px 18px; border-bottom: 1px solid var(--border); font-size: 14px; }
+  .feed-row:last-child { border-bottom: 0; }
+  .feed-row strong { display: block; }
+  .feed-row span { color: var(--muted); }
+  .feed-right { text-align: right; flex-shrink: 0; }
+  .score { display: inline-block; background: var(--accent-soft); color: var(--accent); border-radius: 6px; padding: 1px 8px; font-size: 13px; }
+  .feed-right em { display: block; font-style: normal; font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+  .band { background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+  .band .card { background: var(--bg); }
+  .steps { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  .steps .card { padding: 20px; gap: 14px; }
+  .steps .card > p { font-size: 14px; }
+  .num { font-size: 12px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: .06em; }
+  .artifact { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px; font-size: 13px; }
+  .jp-co { color: var(--muted); font-size: 12px; }
+  .jp-title { font-weight: 700; font-size: 16px; margin: 4px 0 8px; }
+  .jp-line { font-style: italic; color: var(--muted); }
+  .jp-meta { font-size: 12px; color: var(--accent); margin-top: 8px; }
+  .score-table { width: 100%; border-collapse: collapse; }
+  .score-table td { padding: 5px 0; border-bottom: 1px solid var(--border); }
+  .score-table td:last-child { white-space: nowrap; padding-left: 8px; text-align: right; font-weight: 600; color: var(--accent); }
+  .score-table .total td { border-bottom: 0; font-weight: 700; color: var(--text); padding-top: 8px; }
+  .contact .hint { display: block; font-size: 11px; color: var(--accent); margin-bottom: 6px; }
+  .contact .row { display: flex; justify-content: space-between; gap: 8px; padding: 5px 0; border-top: 1px solid var(--border); }
+  .contact .row span:first-child { color: var(--muted); }
+  .contact i { color: var(--muted); font-style: normal; }
+  .email .subj { font-weight: 700; margin-bottom: 8px; }
+  .email p { margin: 0 0 8px; color: var(--text) !important; }
+  .fine { font-size: 13px; color: var(--muted); margin-top: 16px; }
+
+  .plays { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+  .play p { font-size: 15px; }
+  .flow { list-style: none; padding: 0; margin: 4px 0 0; display: flex; flex-direction: column; gap: 6px; counter-reset: f; }
+  .flow li { counter-increment: f; font-size: 14px; display: flex; gap: 10px; align-items: baseline; }
+  .flow li::before { content: counter(f); font-size: 11px; font-weight: 700; color: var(--accent); background: var(--accent-soft); border-radius: 50%; width: 20px; height: 20px; display: inline-grid; place-items: center; flex-shrink: 0; }
+  .soon { opacity: .75; }
+
+  @media (max-width: 980px) { .steps { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 820px) { .hero-grid { grid-template-columns: 1fr; gap: 32px; } }
+  @media (max-width: 560px) { .steps { grid-template-columns: 1fr; } }
+</style>

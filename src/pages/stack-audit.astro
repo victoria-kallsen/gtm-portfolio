@@ -1,0 +1,137 @@
+---
+import Base from '../layouts/Base.astro';
+import { stackTools, jobs } from '../data/stack';
+---
+<Base title="GTM Stack Audit · Victoria Kallsen" description="Check your sales and marketing tools for overlap and unused seats, and estimate what you could save.">
+  <section>
+    <div class="wrap">
+      <p class="eyebrow">Free tool</p>
+      <h1>GTM stack audit</h1>
+      <p class="lede">Tick the tools you pay for and add what they cost. You'll see where tools do the same job, how much you spend on unused seats, and a rough estimate of what you could cut. Nothing you enter leaves your browser.</p>
+
+      <div class="audit">
+        <div class="picker">
+          {stackTools.map((t, i) => (
+            <div class="tool" data-i={i}>
+              <label class="pick">
+                <input type="checkbox" />
+                <span class="tname">{t.name}</span>
+                <span class="tjobs">{t.jobs.map((j) => jobs[j]).join(' · ')}</span>
+              </label>
+              <div class="inputs" hidden>
+                <label>Monthly cost ($)<input type="number" min="0" inputmode="numeric" data-f="cost" placeholder="e.g. 500" /></label>
+                <label>Seats paid<input type="number" min="0" inputmode="numeric" data-f="paid" placeholder="optional" /></label>
+                <label>Seats used<input type="number" min="0" inputmode="numeric" data-f="used" placeholder="optional" /></label>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <aside class="results card" aria-live="polite">
+          <h3>Your results</h3>
+          <p class="empty">Tick at least two tools to see results.</p>
+          <div class="out" hidden>
+            <div class="metrics">
+              <div class="metric"><strong data-o="spend">$0</strong><span>monthly spend</span></div>
+              <div class="metric"><strong data-o="save">$0</strong><span>possible savings / month</span></div>
+            </div>
+            <p class="annual" data-o="annual"></p>
+            <div data-o="overlaps"></div>
+            <div data-o="cuts"></div>
+            <div data-o="seats"></div>
+            <p class="note">This is a rough estimate based on which jobs each tool does. A real audit also checks contracts, renewal dates, integrations, and what your team actually relies on.</p>
+            <a class="btn" href="/#contact">Get a free audit call</a>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .audit { display: grid; grid-template-columns: 1.4fr 1fr; gap: 28px; margin-top: 32px; align-items: start; }
+  .picker { display: flex; flex-direction: column; gap: 8px; }
+  .tool { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; }
+  .tool.on { border-color: var(--accent); }
+  .pick { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; align-items: center; cursor: pointer; }
+  .pick input { width: 18px; height: 18px; accent-color: var(--accent); grid-row: span 2; }
+  .tname { font-weight: 600; }
+  .tjobs { font-size: 13px; color: var(--muted); }
+  .inputs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 12px; }
+  .inputs[hidden] { display: none; }
+  .inputs label { font-size: 12px; color: var(--muted); display: flex; flex-direction: column; gap: 4px; }
+  .inputs input { font: inherit; font-size: 15px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); width: 100%; }
+  .results { position: sticky; top: 20px; }
+  .results h4 { margin: 18px 0 6px; font-size: 15px; }
+  .results ul { margin: 0; padding-left: 18px; font-size: 14px; color: var(--muted); }
+  .results li { margin-bottom: 4px; }
+  .annual { font-size: 15px; margin: 8px 0 0; }
+  .note, .empty { font-size: 13px; color: var(--muted); }
+  .results .btn { align-self: flex-start; }
+  @media (max-width: 820px) { .audit { grid-template-columns: 1fr; } .results { position: static; } }
+  @media (max-width: 480px) { .inputs { grid-template-columns: 1fr 1fr; } .inputs label:first-child { grid-column: 1 / -1; } }
+</style>
+
+<script>
+  import { stackTools, jobs, type Job } from '../data/stack';
+  const fmt = (n: number) => '$' + Math.round(n).toLocaleString('en-US');
+  const esc = (s: string) => s.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]!));
+  const rows = [...document.querySelectorAll<HTMLElement>('.tool')];
+  const $ = (k: string) => document.querySelector<HTMLElement>(`[data-o="${k}"]`)!;
+
+  function compute() {
+    const picked = rows.filter((r) => r.querySelector<HTMLInputElement>('input[type=checkbox]')!.checked).map((r) => {
+      const t = stackTools[+r.dataset.i!];
+      const num = (f: string) => parseFloat(r.querySelector<HTMLInputElement>(`[data-f="${f}"]`)!.value) || 0;
+      return { ...t, cost: num('cost'), paid: num('paid'), used: num('used') };
+    });
+    document.querySelector<HTMLElement>('.empty')!.hidden = picked.length >= 2;
+    document.querySelector<HTMLElement>('.out')!.hidden = picked.length < 2;
+    if (picked.length < 2) return;
+
+    const spend = picked.reduce((s, t) => s + t.cost, 0);
+
+    // Jobs covered by more than one tool
+    const byJob = new Map<Job, string[]>();
+    picked.forEach((t) => t.jobs.forEach((j) => byJob.set(j, [...(byJob.get(j) ?? []), t.name])));
+    const overlaps = [...byJob].filter(([, names]) => names.length > 1);
+
+    // Tools whose every job is covered by the rest. Check the priciest first so the estimate reflects the biggest win.
+    const kept = new Set(picked.map((t) => t.name));
+    const cuts: typeof picked = [];
+    [...picked].sort((a, b) => b.cost - a.cost).forEach((t) => {
+      const others = picked.filter((o) => o.name !== t.name && kept.has(o.name));
+      if (t.jobs.every((j) => others.some((o) => o.jobs.includes(j)))) { kept.delete(t.name); cuts.push(t); }
+    });
+    const cutSave = cuts.reduce((s, t) => s + t.cost, 0);
+
+    // Unused seats on the tools that stay
+    const seatWaste = picked.filter((t) => kept.has(t.name) && t.paid > t.used && t.used > 0 && t.cost > 0)
+      .map((t) => ({ name: t.name, unused: t.paid - t.used, save: (t.cost * (t.paid - t.used)) / t.paid }));
+    const seatSave = seatWaste.reduce((s, t) => s + t.save, 0);
+
+    const save = cutSave + seatSave;
+    $('spend').textContent = fmt(spend);
+    $('save').textContent = fmt(save);
+    $('annual').textContent = save > 0 ? `That's about ${fmt(save * 12)} a year.` : '';
+    $('overlaps').innerHTML = overlaps.length
+      ? `<h4>Jobs you're paying for more than once</h4><ul>${overlaps.map(([j, n]) => `<li><strong>${jobs[j]}:</strong> ${n.map(esc).join(', ')}</li>`).join('')}</ul>`
+      : '<h4>No overlap found</h4><ul><li>Each job is covered by a single tool.</li></ul>';
+    $('cuts').innerHTML = cuts.length
+      ? `<h4>Possibly redundant</h4><ul>${cuts.map((t) => `<li>${esc(t.name)}: everything it does is covered by your other tools${t.cost ? ` (${fmt(t.cost)}/mo)` : ''}</li>`).join('')}</ul>`
+      : '';
+    $('seats').innerHTML = seatWaste.length
+      ? `<h4>Unused seats</h4><ul>${seatWaste.map((t) => `<li>${esc(t.name)}: ${t.unused} unused (${fmt(t.save)}/mo)</li>`).join('')}</ul>`
+      : '';
+  }
+
+  rows.forEach((r) => {
+    const cb = r.querySelector<HTMLInputElement>('input[type=checkbox]')!;
+    cb.addEventListener('change', () => {
+      r.classList.toggle('on', cb.checked);
+      r.querySelector<HTMLElement>('.inputs')!.hidden = !cb.checked;
+      compute();
+    });
+    r.querySelectorAll('input[type=number]').forEach((i) => i.addEventListener('input', compute));
+  });
+</script>

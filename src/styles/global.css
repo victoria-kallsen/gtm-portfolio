@@ -66,3 +66,7 @@ article.case h2 { font-size: 22px; margin-top: 40px; }
   .cta { padding: 26px; }
   section { padding: 40px 0; }
 }
+@media (max-width: 720px) {
+  header.site .wrap { flex-wrap: wrap; row-gap: 8px; }
+  header.site nav { flex-wrap: wrap; gap: 6px 14px; font-size: 14px; }
+}
