@@ -1,0 +1,130 @@
+---
+import Base from '../layouts/Base.astro';
+---
+<Base title="Account Brief Generator · Victoria Kallsen" description="Enter a company domain and get the buying signals worth acting on, who to talk to, and a draft opener.">
+  <section>
+    <div class="wrap">
+      <p class="eyebrow">Live demo</p>
+      <h1>Account brief generator</h1>
+      <p class="lede">Enter a company's domain. An AI agent researches it on the live web and comes back with the signals worth acting on, who to talk to, and a first email. This is the research step of the outbound systems I build, running for real.</p>
+
+      <form id="f" class="card form">
+        <label>Company domain
+          <input name="domain" required placeholder="e.g. figure.ai" autocomplete="off" />
+        </label>
+        <label><span>What do you sell? <span class="opt">(optional)</span></span>
+          <input name="offer" maxlength="200" placeholder="e.g. warehouse robotics software for 3PLs" />
+        </label>
+        <button class="btn" type="submit">Research this account</button>
+        <p class="hint">Takes 30 to 90 seconds. Leave "what do you sell" blank to see the brief I'd write for my own outreach.</p>
+      </form>
+
+      <div id="status" class="status" hidden></div>
+      <div id="out" hidden></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <div class="cta">
+        <h2>Want this running on your whole target list?</h2>
+        <p class="lede">In a real build, this step runs automatically on every account that fires a signal, writes to your CRM, and alerts the owner. No copy and paste.</p>
+        <div class="actions"><a class="btn" href="/#contact">Book a call</a></div>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .form { margin-top: 28px; max-width: 640px; gap: 16px; }
+  .form label { display: flex; flex-direction: column; gap: 6px; font-weight: 600; font-size: 15px; }
+  .form input { font: inherit; font-weight: 400; padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg); color: var(--text); }
+  .form button { align-self: flex-start; border: 0; cursor: pointer; font: inherit; font-weight: 600; }
+  .form button:disabled { opacity: .6; cursor: wait; }
+  .opt { font-weight: 400; color: var(--muted); font-size: 13px; }
+  .hint { font-size: 13px; color: var(--muted) !important; }
+  .status { margin-top: 24px; color: var(--muted); display: flex; gap: 10px; align-items: center; }
+  .status[hidden] { display: none; }
+  .status.err { color: #b3261e; }
+  .spin { width: 16px; height: 16px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: s 1s linear infinite; }
+  @keyframes s { to { transform: rotate(360deg); } }
+  #out { margin-top: 32px; display: grid; gap: 20px; }
+  :global(.b-head) { display: flex; justify-content: space-between; gap: 20px; align-items: flex-start; flex-wrap: wrap; }
+  :global(.b-head h2) { margin: 0 0 6px; }
+  :global(.b-meta) { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  :global(.b-meta span) { font-size: 12px; border: 1px solid var(--border); border-radius: 6px; padding: 2px 8px; color: var(--muted); }
+  :global(.b-score) { text-align: center; background: var(--accent-soft); border-radius: 12px; padding: 12px 18px; }
+  :global(.b-score strong) { display: block; font-size: 30px; color: var(--accent); }
+  :global(.b-score span) { font-size: 12px; color: var(--muted); }
+  :global(.b-sig) { border-top: 1px solid var(--border); padding-top: 12px; }
+  :global(.b-sig:first-of-type) { border-top: 0; padding-top: 0; }
+  :global(.b-sig h4) { margin: 0 0 4px; font-size: 16px; }
+  :global(.b-sig p) { margin: 0 0 4px; font-size: 15px; }
+  :global(.b-sig small) { color: var(--muted); }
+  :global(.b-grid) { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  :global(.b-email) { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 16px; white-space: pre-wrap; font-size: 15px; }
+  :global(.b-email b) { display: block; margin-bottom: 8px; }
+  :global(.b-copy) { align-self: flex-start; font: inherit; font-size: 13px; background: none; border: 1px solid var(--border); color: var(--text); border-radius: 8px; padding: 6px 12px; cursor: pointer; }
+  :global(.card h3) { margin: 0; }
+  :global(.b-caveat) { font-size: 13px; color: var(--muted); margin: 0; }
+  :global(.card ul) { margin: 0; padding-left: 18px; }
+  @media (max-width: 760px) { :global(.b-grid) { grid-template-columns: 1fr; } }
+</style>
+
+<script>
+  const f = document.getElementById('f') as HTMLFormElement;
+  const status = document.getElementById('status')!;
+  const out = document.getElementById('out')!;
+  const esc = (s: unknown) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
+  const safeUrl = (u: string) => (/^https?:\/\//i.test(u) ? u : '');
+  const steps = ['Searching the web for the company', 'Checking for hiring, funding and leadership changes', 'Reading the most relevant sources', 'Scoring the account', 'Drafting the opener'];
+
+  f.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = f.querySelector('button')!;
+    const data = Object.fromEntries(new FormData(f));
+    btn.disabled = true; out.hidden = true; status.hidden = false; status.className = 'status';
+    let i = 0;
+    const tick = () => { status.innerHTML = `<span class="spin"></span>${esc(steps[Math.min(i, steps.length - 1)])}…`; i++; };
+    tick(); const timer = setInterval(tick, 12000);
+    try {
+      const res = await fetch('/api/brief', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(data) });
+      const json = await res.json().catch(() => ({ error: 'Something went wrong. Please try again.' }));
+      if (!res.ok) throw new Error(json.error);
+      render(json.brief);
+      status.hidden = true;
+    } catch (err) {
+      status.className = 'status err';
+      status.textContent = (err as Error).message || 'Something went wrong. Please try again.';
+    } finally { clearInterval(timer); btn.disabled = false; }
+  });
+
+  function render(b: any) {
+    const c = b.company;
+    out.innerHTML = `
+      <div class="card">
+        <div class="b-head">
+          <div><h2>${esc(c.name)}</h2><p>${esc(c.one_liner)}</p>
+            <div class="b-meta"><span>${esc(c.industry)}</span><span>${esc(c.size)}</span><span>${esc(c.stage)}</span></div></div>
+          <div class="b-score"><strong>${esc(b.fit_score)}</strong><span>fit score</span></div>
+        </div>
+      </div>
+      <div class="card"><h3>Signals worth acting on</h3>
+        ${b.signals.length ? b.signals.map((s: any) => `<div class="b-sig"><h4>${esc(s.signal)}</h4><p>${esc(s.detail)}</p><p><strong>Why it matters:</strong> ${esc(s.why_it_matters)}</p>
+          <small>${esc(s.when)}${safeUrl(s.source_url) ? ` · <a href="${esc(safeUrl(s.source_url))}" target="_blank" rel="noopener nofollow">source</a>` : ''}</small></div>`).join('') : '<p>No strong recent signals found. This account may be one to watch rather than contact now.</p>'}
+      </div>
+      <div class="b-grid">
+        <div class="card"><h3>Who to talk to</h3><ul>${b.buying_committee.map((p: any) => `<li><strong>${esc(p.role)}</strong>: ${esc(p.why)}</li>`).join('')}</ul>
+          <h3 style="margin-top:12px">Recommended play</h3><p>${esc(b.recommended_play)}</p></div>
+        <div class="card"><h3>Draft opener</h3><div class="b-email"><b>Subject: ${esc(b.opener.subject)}</b>${esc(b.opener.body)}</div>
+          <button class="b-copy" type="button">Copy email</button></div>
+      </div>
+      ${b.caveats ? `<p class="b-caveat">Note: ${esc(b.caveats)}</p>` : ''}`;
+    out.hidden = false;
+    out.querySelector<HTMLButtonElement>('.b-copy')?.addEventListener('click', (e) => {
+      navigator.clipboard?.writeText(`Subject: ${b.opener.subject}\n\n${b.opener.body}`);
+      (e.target as HTMLButtonElement).textContent = 'Copied';
+    });
+    out.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+</script>
