@@ -1,0 +1,65 @@
+---
+import Base from '../layouts/Base.astro';
+import { getCollection } from 'astro:content';
+
+const studies = (await getCollection('caseStudies')).sort((a, b) => a.data.order - b.data.order);
+// TODO: replace with real booking link (Cal.com / Calendly)
+const bookingUrl = '#contact';
+---
+<Base>
+  <section>
+    <div class="wrap">
+      <p class="eyebrow">GTM Engineer · Contract</p>
+      <h1>I build the systems that find your next customers and stop you paying for tools you don't need.</h1>
+      <p class="lede">Signal-based outbound, enrichment and routing, and lean GTM stacks for B2B teams that want more pipeline without more headcount.</p>
+      <div class="actions">
+        <a class="btn" href={bookingUrl}>Book a call</a>
+        <a class="btn ghost" href="#work">See the work</a>
+      </div>
+    </div>
+  </section>
+
+  <section id="work">
+    <div class="wrap">
+      <h2>Selected work</h2>
+      <div class="grid">
+        {studies.map((s) => (
+          <a class="card" href={`/work/${s.id}/`}>
+            <span class="tag">{s.data.status === 'in-progress' ? `${s.data.tag} · in progress` : s.data.tag}</span>
+            <h3>{s.data.title}</h3>
+            <p>{s.data.summary}</p>
+            <div class="metrics">
+              {s.data.metrics.slice(0, 2).map((m) => (
+                <div class="metric"><strong>{m.value}</strong><span>{m.label}</span></div>
+              ))}
+            </div>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section id="services">
+    <div class="wrap">
+      <h2>What I can build for you</h2>
+      <div class="services">
+        <div><h3>Signal-based outbound</h3><p>Watch hiring, funding, tech and intent signals, score accounts, and send timely, relevant outreach automatically.</p></div>
+        <div><h3>Enrichment and routing</h3><p>Waterfall enrichment, lead scoring, and routing so every inbound lead reaches the right rep in minutes.</p></div>
+        <div><h3>GTM stack audits</h3><p>Find overlapping tools and unused seats, consolidate, and migrate with no downtime.</p></div>
+        <div><h3>CRM and data hygiene</h3><p>Clean, deduplicated, trustworthy CRM data your reps and reports can rely on.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="contact">
+    <div class="wrap">
+      <div class="cta">
+        <h2>Want to see if I can help?</h2>
+        <p class="lede">Tell me about your GTM motion. I'll come back with where I'd start and what it would likely save or generate.</p>
+        <div class="actions">
+          <a class="btn" href={bookingUrl}>Book a 20-minute call</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</Base>
